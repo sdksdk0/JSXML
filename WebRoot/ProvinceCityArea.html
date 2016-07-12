@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>无标题文档</title>
+</head>
+
+<style>
+	select{
+		border:1px solid #f90;
+		width:200px;
+		height:20px;		
+	}
+
+
+</style>
+
+<body>
+
+
+	<select id="province"><option value="1001">--请选择省、直辖市--</select>省、直辖市
+    <select  id="city"> <option value="100100">--请选择市、区--</option></select>市、区
+    <select id="area"><option value="100101">--请选择县、街道--</option></select>县、街道
+    
+    
+    <script>
+	
+		function createXmlDom(){
+				var xmldom=null;
+				if(window.ActiveXObject){  //IE浏览器独有的
+						xmldom=createIeXmlDom();
+				}else  if(document.implementation.createDocument){
+						xmldom=document.implementation.createDocument("","",null);
+				}else{	
+					alert("您的浏览器不支持xmlDom,请及时更新浏览器");
+				}
+				return xmldom;
+			}
+		
+			//用来创建ie浏览器里面的xmldom
+			function createIeXmlDom(){
+				var arr=["MSXML2.DOMDocument.6.0","MSXML2.DOMDocument.5.0","MSXML2.DOMDocument.4.0",  	"MSXML2.DOMDocument.3.0","MSXML2.DOMDocument","Microsoft.XMLDOM"];
+				
+				for(var i=0;i<arr.length;i++){
+					
+					//如果ie浏览器发现版本不对，那么就会继续往下循环
+					
+					try{
+						var ieXmlDom=new ActiveXObject(arr[i]);
+						return ieXmlDom;
+					}catch(ex){
+						alert("您的浏览器不支持不MSXML，请更新浏览器");	
+					}
+				}	
+			}
+			
+			window.onload=function(){
+				
+				var xmldom;
+				if(window.DOMParser && !window.ActiveXOBject){
+					
+					var xmlhttp=new XMLHttpRequest();
+					xmlhttp.open("GET","city.xml",false);
+					xmlhttp.send(null);
+					if(xmlhttp.readyState==4){
+						xmldom=xmlhttp.responseXML.documentElement;
+						var a=xmldom.getElementsByTagName("province");
+					}
+				}else{
+					
+					xmldom=createXmlDom();
+					xmldom.async=false; 
+					xmldom.load("city.xml");
+				}
+				
+
+					//开始解析xml
+					var pro=document.getElementById("province");
+					var city=document.getElementById("city");
+					var area=document.getElementById("area");
+					
+					var pros=xmldom.getElementsByTagName("province");
+					for(var i=0;i<pros.length;i++){
+						addOption(pros[i],pro);	
+					}
+					
+					//省份改变时
+					pro.onchange=function(){
+						//获取到编号
+						var code=pro.value;	
+						city.length=1;
+						for(var i=0;i<pros.length;i++){
+							if(pros[i].nodeType==1 && pros[i].getAttribute("postcode")==code){
+								//找到点击的省份
+								var cities=pros[i].childNodes;
+								for(var j=0;j<cities.length;j++){
+									
+									if(cities[j].nodeType==1){
+										addOption(cities[j],city);	
+									}
+								}
+							}
+						}
+					}
+					
+					//当城市改变的时候
+					city.onchange=function(){
+						var selPro=pro.value;
+						var code=city.value;
+						area.length=1;
+						for(var i=0;i<pros.length;i++){
+							if(pros[i].nodeType==1 && pros[i].getAttribute("postcode")==selPro){
+								//找到点击的省份
+								var cities=pros[i].childNodes;
+								for(var j=0;j<cities.length;j++){
+									if(cities[j].nodeType==1 && cities[j].getAttribute("postcode")==code){
+										
+										//找到了点击的城市
+										var areas=cities[j].childNodes;
+										for(var k=0;k<areas.length;k++){
+											if(areas[k].nodeType==1){
+												addOption(areas[k],area);
+											}
+										}
+									}
+								}
+							}
+						}		
+					}
+			}
+			
+			function addOption(node,obj){
+				var opt=document.createElement("option");
+				opt.appendChild(document.createTextNode(node.getAttribute("name")));
+				opt.setAttribute("value",node.getAttribute("postcode"));
+				obj.appendChild(opt);	
+			}
+			
+	
+	</script>
+</body>
+</html>
